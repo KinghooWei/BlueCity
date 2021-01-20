@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/frameLayout"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".my.MyFragment">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline10"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            app:layout_constraintGuide_percent="0.2" />
+
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideline11"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_begin="20dp" />
+
+        <ImageView
+            android:id="@+id/iv_portrait"
+            android:layout_width="60dp"
+            android:layout_height="60dp"
+            android:src="@drawable/ic_menu_my"
+            app:layout_constraintBottom_toTopOf="@+id/guideline10"
+            app:layout_constraintStart_toStartOf="@+id/guideline11"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/linear_my"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/guideline10" />
+
+        <TextView
+            android:id="@+id/tv_name"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="20dp"
+            android:text="姓名"
+            android:textColor="#000000"
+            android:textSize="24sp"
+            app:layout_constraintBottom_toTopOf="@+id/guideline10"
+            app:layout_constraintStart_toEndOf="@+id/iv_portrait"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <ImageView
+            android:id="@+id/iv_arrow"
+            android:layout_width="40dp"
+            android:layout_height="20dp"
+            android:src="@drawable/ic_my_arrow"
+            app:layout_constraintBottom_toTopOf="@+id/guideline10"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+        <View
+            android:id="@+id/v_info"
+            android:layout_width="wrap_content"
+            android:layout_height="120dp"
+            app:layout_constraintBottom_toTopOf="@+id/guideline10"
+            app:layout_constraintEnd_toEndOf="@+id/iv_arrow"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+</FrameLayout>

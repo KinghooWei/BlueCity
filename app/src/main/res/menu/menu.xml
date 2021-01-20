@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <item
+        android:id="@+id/accessFragment"
+        android:icon="@drawable/ic_menu_access"
+        android:title="门禁" />
+    <item
+        android:id="@+id/serviceFragment"
+        android:icon="@drawable/ic_menu_service"
+        android:title="智慧服务" />
+    <item
+        android:id="@+id/homeFragment"
+        android:icon="@drawable/ic_menu_home"
+        android:title="智慧家居" />
+    <item
+        android:id="@+id/myFragment"
+        android:icon="@drawable/ic_menu_my"
+        android:title="我的" />
+</menu>

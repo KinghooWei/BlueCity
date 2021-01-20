@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/nav_address"
+    app:startDestination="@id/addressFragment">
+
+    <fragment
+        android:id="@+id/addressFragment"
+        android:name="com.example.bluecity.my.information.address.AddressFragment"
+        android:label="设置住址"
+        tools:layout="@layout/fragment_address">
+        <action
+            android:id="@+id/action_addressFragment_to_provinceFragment"
+            app:destination="@id/provinceFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/provinceFragment"
+        android:name="com.example.bluecity.my.information.address.ProvinceFragment"
+        android:label="我的住址"
+        tools:layout="@layout/fragment_province">
+        <action
+            android:id="@+id/action_provinceFragment_to_cityFragment"
+            app:destination="@id/cityFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/cityFragment"
+        android:name="com.example.bluecity.my.information.address.CityFragment"
+        android:label="我的住址"
+        tools:layout="@layout/fragment_city">
+        <action
+            android:id="@+id/action_cityFragment_to_communityFragment"
+            app:destination="@id/communityFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/communityFragment"
+        android:name="com.example.bluecity.my.information.address.CommunityFragment"
+        android:label="我的住址"
+        tools:layout="@layout/fragment_community">
+        <action
+            android:id="@+id/action_communityFragment_to_buildingFragment"
+            app:destination="@id/buildingFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/buildingFragment"
+        android:name="com.example.bluecity.my.information.address.BuildingFragment"
+        android:label="我的住址"
+        tools:layout="@layout/fragment_building">
+        <action
+            android:id="@+id/action_buildingFragment_to_addressFragment"
+            app:destination="@id/addressFragment" />
+    </fragment>
+</navigation>

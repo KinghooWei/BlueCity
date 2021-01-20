@@ -1,0 +1,171 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation"
+    app:startDestination="@id/accessFragment">
+
+    <fragment
+        android:id="@+id/accessFragment"
+        android:name="com.example.bluecity.access.AccessFragment"
+        android:label="门禁"
+        tools:layout="@layout/access_fragment" >
+        <action
+            android:id="@+id/action_accessFragment_to_tempPwdFragment"
+            app:destination="@id/tempPwdFragment" />
+        <action
+            android:id="@+id/action_accessFragment_to_QRCodeFragment"
+            app:destination="@id/QRCodeFragment" />
+        <action
+            android:id="@+id/action_accessFragment_to_recordFragment"
+            app:destination="@id/recordFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/serviceFragment"
+        android:name="com.example.bluecity.service.ServiceFragment"
+        android:label="智慧服务"
+        tools:layout="@layout/service_fragment" />
+    <fragment
+        android:id="@+id/homeFragment"
+        android:name="com.example.bluecity.home.HomeFragment"
+        android:label="智慧家居"
+        tools:layout="@layout/home_fragment" />
+    <fragment
+        android:id="@+id/myFragment"
+        android:name="com.example.bluecity.my.MyFragment"
+        android:label="我的"
+        tools:layout="@layout/my_fragment" >
+        <action
+            android:id="@+id/action_myFragment_to_infoFragment"
+            app:destination="@id/infoFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/tempPwdFragment"
+        android:name="com.example.bluecity.access.TempPwdFragment"
+        android:label="临时密码" />
+    <fragment
+        android:id="@+id/infoFragment"
+        android:name="com.example.bluecity.my.information.InfoFragment"
+        android:label="个人信息">
+        <action
+            android:id="@+id/action_infoFragment_to_addressFragment"
+            app:destination="@id/addressFragment" />
+        <action
+            android:id="@+id/action_infoFragment_to_loginPwdModifyFragment"
+            app:destination="@id/loginPwdModifyFragment" />
+        <action
+            android:id="@+id/action_infoFragment_to_communityPwdModifyFragment"
+            app:destination="@id/communityPwdModifyFragment" />
+        <action
+            android:id="@+id/action_infoFragment_to_communityPwdSetFragment"
+            app:destination="@id/communityPwdSetFragment" />
+        <action
+            android:id="@+id/action_infoFragment_to_buildingPwdModifyFragment"
+            app:destination="@id/buildingPwdModifyFragment" />
+        <action
+            android:id="@+id/action_infoFragment_to_buildingPwdSetFragment"
+            app:destination="@id/buildingPwdSetFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/addressFragment"
+        android:name="com.example.bluecity.my.information.address.AddressFragment"
+        android:label="设置住址">
+        <action
+            android:id="@+id/action_addressFragment_to_provinceFragment"
+            app:destination="@id/provinceFragment" />
+        <action
+            android:id="@+id/action_addressFragment_to_infoFragment"
+            app:destination="@id/infoFragment"
+            app:popUpTo="@id/infoFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/provinceFragment"
+        android:name="com.example.bluecity.my.information.address.ProvinceFragment"
+        android:label="我的住址">
+        <action
+            android:id="@+id/action_provinceFragment_to_cityFragment"
+            app:destination="@id/cityFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/cityFragment"
+        android:name="com.example.bluecity.my.information.address.CityFragment"
+        android:label="我的住址" >
+        <action
+            android:id="@+id/action_cityFragment_to_communityFragment"
+            app:destination="@id/communityFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/communityFragment"
+        android:name="com.example.bluecity.my.information.address.CommunityFragment"
+        android:label="我的住址" >
+        <action
+            android:id="@+id/action_communityFragment_to_buildingFragment"
+            app:destination="@id/buildingFragment" />
+    </fragment>
+    <fragment
+        android:id="@+id/buildingFragment"
+        android:name="com.example.bluecity.my.information.address.BuildingFragment"
+        android:label="我的住址" >
+        <action
+            android:id="@+id/action_buildingFragment_to_addressFragment"
+            app:destination="@id/addressFragment"
+            app:popUpTo="@id/addressFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/loginPwdModifyFragment"
+        android:name="com.example.bluecity.my.information.password.LoginPwdModifyFragment"
+        android:label="修改登录密码" >
+    </fragment>
+    <fragment
+        android:id="@+id/communityPwdModifyFragment"
+        android:name="com.example.bluecity.my.information.password.CommunityPwdModifyFragment"
+        android:label="修改小区大门密码" >
+        <action
+            android:id="@+id/action_communityPwdModifyFragment_to_infoFragment"
+            app:destination="@id/infoFragment"
+            app:popUpTo="@id/infoFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/communityPwdSetFragment"
+        android:name="com.example.bluecity.my.information.password.CommunityPwdSetFragment"
+        android:label="设置小区大门密码" >
+        <action
+            android:id="@+id/action_communityPwdSetFragment_to_infoFragment"
+            app:destination="@id/infoFragment"
+            app:popUpTo="@id/infoFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/buildingPwdModifyFragment"
+        android:name="com.example.bluecity.my.information.password.BuildingPwdModifyFragment"
+        android:label="修改楼门密码" >
+        <action
+            android:id="@+id/action_buildingPwdModifyFragment_to_infoFragment"
+            app:destination="@id/infoFragment"
+            app:popUpTo="@id/infoFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/buildingPwdSetFragment"
+        android:name="com.example.bluecity.my.information.password.BuildingPwdSetFragment"
+        android:label="设置楼门密码" >
+        <action
+            android:id="@+id/action_buildingPwdSetFragment_to_infoFragment"
+            app:destination="@id/infoFragment"
+            app:popUpTo="@id/infoFragment"
+            app:popUpToInclusive="true" />
+    </fragment>
+    <fragment
+        android:id="@+id/QRCodeFragment"
+        android:name="com.example.bluecity.access.QRCodeFragment"
+        android:label="二维码"
+        tools:layout="@layout/fragment_q_r_code" />
+    <fragment
+        android:id="@+id/recordFragment"
+        android:name="com.example.bluecity.access.RecordFragment"
+        android:label="门禁记录"
+        tools:layout="@layout/fragment_record" />
+</navigation>
