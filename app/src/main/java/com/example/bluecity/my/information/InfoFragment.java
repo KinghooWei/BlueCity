@@ -50,6 +50,8 @@ import org.json.JSONObject;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -61,8 +63,8 @@ public class InfoFragment extends BaseFragment {
     private FragmentInfoBinding binding;
     private PopupWindow popupWindow;
     private HttpUtils httpUtils;
-    SharedPreferencesUtil sharedPreferencesUtil = null;
-    private RecyclerView.Adapter adapter;
+    SharedPreferencesUtil sharedPreferencesUtil;
+    private InfoAdapter adapter;
 
     private static final int CODE_GALLERY_REQUEST = 0xa0;
     private static final int CODE_CAMERA_REQUEST = 0xa1;
@@ -77,18 +79,21 @@ public class InfoFragment extends BaseFragment {
     private File faceCropFile = new File(Environment.getExternalStorageDirectory().getPath() + "/blueCity_face.jpg");
     private File portraitFile, portraitCropFile;
     private Uri portraitUri, portraitCropUri, faceUri, faceCropUri;
-
-    public InfoFragment() {
-        // Required empty public constructor
-    }
-
+    String[] infoArr = new String[] {"头像", "人脸采集", "家庭住址", "登录密码", "小区密码", "楼栋密码", "退出登录"};
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         binding = DataBindingUtil.inflate(inflater, R.layout.fragment_info, container, false);
         binding.setLifecycleOwner(getActivity());
-
-        adapter = new InfoAdapter(getContext(), new InfoAdapter.OnItemClickListener() {
+        sharedPreferencesUtil = new SharedPreferencesUtil(getContext(), "userInfo");
+        boolean hasFace = sharedPreferencesUtil.loadBoolean("hasFace");
+        String communityResult = sharedPreferencesUtil.loadString("community");
+        String buildingResult = sharedPreferencesUtil.loadString("building");
+        String[] resultArr = new String[infoArr.length];
+        resultArr[1] = hasFace ? "已上传" : "未上传";
+        resultArr[2] = communityResult + " " + buildingResult;
+        adapter = new InfoAdapter(this, infoArr, resultArr);
+        adapter.setOnItemClickListener(new InfoAdapter.OnItemClickListener() {
             @Override
             public void onClick(int pos) {
                 NavController controller;
@@ -109,7 +114,7 @@ public class InfoFragment extends BaseFragment {
                         controller.navigate(R.id.action_infoFragment_to_loginPwdModifyFragment);
                         break;
                     case 4:     //小区密码
-                        sharedPreferencesUtil = new SharedPreferencesUtil(getContext(), "userInfo");
+
                         boolean hasCommunityPwd = sharedPreferencesUtil.loadBoolean("hasCommunityPwd");
                         if (hasCommunityPwd) {
                             controller = Navigation.findNavController(getActivity(), R.id.rv_info);
@@ -120,7 +125,6 @@ public class InfoFragment extends BaseFragment {
                         }
                         break;
                     case 5:     //楼栋密码
-                        sharedPreferencesUtil = new SharedPreferencesUtil(getContext(), "userInfo");
                         boolean hasBuildingPwd = sharedPreferencesUtil.loadBoolean("hasBuildingPwd");
                         if (hasBuildingPwd) {
                             controller = Navigation.findNavController(getActivity(), R.id.rv_info);
@@ -135,7 +139,6 @@ public class InfoFragment extends BaseFragment {
                                 .setPositiveButton("确定", new DialogInterface.OnClickListener() {
                                     @Override
                                     public void onClick(DialogInterface dialog, int which) {
-                                        sharedPreferencesUtil = new SharedPreferencesUtil(getContext(), "userInfo");
                                         sharedPreferencesUtil.clearAll();
                                         Intent intent = getContext().getPackageManager().getLaunchIntentForPackage(getContext().getPackageName());
                                         intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP);
@@ -437,7 +440,7 @@ public class InfoFragment extends BaseFragment {
         }
     }
 
-    private class ModifyFaceHttpThread extends Thread {
+    private class ModifyFaceHttpThread implements Runnable {
         private int resultCode;
         private Context context;
         private String faceBase64;
@@ -472,27 +475,103 @@ public class InfoFragment extends BaseFragment {
             }
             switch (resultCode) {
                 case -1:
-//                    Log.i(TAG, "头像上传成功");
-                    SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(getContext(), "userInfo");
+                    sharedPreferencesUtil = new SharedPreferencesUtil(getContext(), "userInfo");
                     sharedPreferencesUtil.saveBoolean("hasFace", true);
+                    ThreadToast.toast(getContext(), "上传成功");
                     break;
                 case 1:
-                    new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("系统检测到人脸照片不符合规范，请重新拍照")
-                            .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("未检测到人脸，请重新拍照")
+                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            takePhotoFace();
+                                            dialog.dismiss();
+                                        }
+                                    }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
                                 @Override
                                 public void onClick(DialogInterface dialog, int which) {
-                                    takePhotoFace();
                                     dialog.dismiss();
                                 }
-                            }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                            }).create().show();
+                        }
+                    });
+                    break;
+                case 2:
+                    getActivity().runOnUiThread(new Runnable() {
                         @Override
-                        public void onClick(DialogInterface dialog, int which) {
-                            dialog.dismiss();
+                        public void run() {
+                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("生成口罩和墨镜特征失败，将影响口罩和墨镜识别，建议重新拍照")
+                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            takePhotoFace();
+                                            dialog.dismiss();
+                                        }
+                                    }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            }).create().show();
+                        }
+                    });
+                    break;
+                case 3:
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("生成口罩特征失败，将影响口罩识别，建议重新拍照")
+                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            takePhotoFace();
+                                            dialog.dismiss();
+                                        }
+                                    }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            }).create().show();
+                        }
+                    });
+                    break;
+                case 4:
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("生成墨镜特征失败，将影响墨镜识别，建议重新拍照")
+                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            takePhotoFace();
+                                            dialog.dismiss();
+                                        }
+                                    }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
+                                @Override
+                                public void onClick(DialogInterface dialog, int which) {
+                                    dialog.dismiss();
+                                }
+                            }).create().show();
                         }
                     });
                     break;
                 case 0:
-                    ThreadToast.toast(getContext(), "上传失败");
+                    getActivity().runOnUiThread(new Runnable() {
+                        @Override
+                        public void run() {
+                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("上传失败，请检查网络再重试")
+                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                                        @Override
+                                        public void onClick(DialogInterface dialog, int which) {
+                                            dialog.dismiss();
+                                        }
+                                    }).create().show();
+                        }
+                    });
                     break;
             }
 

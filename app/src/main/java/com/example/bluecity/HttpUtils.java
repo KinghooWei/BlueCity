@@ -16,8 +16,8 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class HttpUtils {
-//    private static String PATH = "http://192.168.1.220:8080/client/api";
-    private static String PATH = "http://172.20.10.10:8080/client/api";
+    private static String PATH = "http://192.168.1.220:8080/client/api";
+//    private static String PATH = "http://172.20.10.10:8080/client/api";
 //    private static String PATH = "http://192.168.43.220:8080/client/api";
 
     private static URL url;
