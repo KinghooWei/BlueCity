@@ -2,7 +2,6 @@ package com.example.bluecity.my.information;
 
 import android.Manifest;
 import android.app.AlertDialog;
-import android.content.ContentUris;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -11,11 +10,9 @@ import android.database.Cursor;
 import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
-import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
 import android.provider.MediaStore;
-import android.util.Base64;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -28,30 +25,26 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
-import androidx.core.content.FileProvider;
 import androidx.databinding.DataBindingUtil;
 import androidx.fragment.app.Fragment;
 import androidx.navigation.NavController;
 import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
-import androidx.recyclerview.widget.RecyclerView;
 
 import com.example.bluecity.HttpUtils;
 import com.example.bluecity.R;
 import com.example.bluecity.SharedPreferencesUtil;
 import com.example.bluecity.ThreadToast;
+import com.example.bluecity.Utils;
 import com.example.bluecity.databinding.FragmentInfoBinding;
+import com.example.bluecity.my.information.face.FaceProcessActivity;
 import com.example.bluecity.my.information.portrait.BaseFragment;
 import com.example.bluecity.my.information.portrait.PhotoUtils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -62,7 +55,6 @@ public class InfoFragment extends BaseFragment {
 
     private FragmentInfoBinding binding;
     private PopupWindow popupWindow;
-    private HttpUtils httpUtils;
     SharedPreferencesUtil sharedPreferencesUtil;
     private InfoAdapter adapter;
 
@@ -79,7 +71,7 @@ public class InfoFragment extends BaseFragment {
     private File faceCropFile = new File(Environment.getExternalStorageDirectory().getPath() + "/blueCity_face.jpg");
     private File portraitFile, portraitCropFile;
     private Uri portraitUri, portraitCropUri, faceUri, faceCropUri;
-    String[] infoArr = new String[] {"头像", "人脸采集", "家庭住址", "登录密码", "小区密码", "楼栋密码", "退出登录"};
+    String[] infoArr = new String[]{"头像", "人脸采集", "家庭住址", "登录密码", "小区密码", "楼栋密码", "退出登录"};
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
@@ -358,7 +350,7 @@ public class InfoFragment extends BaseFragment {
                     bitmap = PhotoUtils.getBitmapfromUri(portraitCropUri, getContext());
                     if (bitmap != null) {
                         //showImages(bitmap);
-                        String base64 = bitmapToBase64(bitmap);
+                        String base64 = Utils.bitmapToBase64(bitmap);
                         Log.e("base64", base64);
                         new Thread(new ModifyPortraitHttpThread(getContext(), base64)).start(); //上传头像
                     }
@@ -375,13 +367,13 @@ public class InfoFragment extends BaseFragment {
                     Log.e("result", "裁剪回调");
                     bitmap = PhotoUtils.getBitmapFromUri(getContext(), faceCropUri);
                     if (bitmap != null) {
-                        //showImages(bitmap);
-//                        byte[] rgba = getPixelsRGBA(bitmap);
-//                        String base64 = Base64.encodeToString(rgba, Base64.NO_WRAP);
-                        //加密
-                        String base64 = bitmapToBase64(bitmap);
-                        Log.e("base64", base64);
-                        new Thread(new ModifyFaceHttpThread(getContext(), base64)).start(); //上传人脸
+                        String base64 = Utils.bitmapToBase64(bitmap);
+                        Bundle bundle = new Bundle();
+                        bundle.putString("origin", base64);
+                        Intent intent = new Intent(getContext(), FaceProcessActivity.class);
+                        intent.putExtras(bundle);
+                        startActivity(intent);
+                        Log.i("base64", base64);
                     }
                     break;
             }
@@ -414,7 +406,7 @@ public class InfoFragment extends BaseFragment {
             } catch (JSONException ex) {
                 ex.printStackTrace();
             }
-            String result = httpUtils.sendJsonPost(jsonObject.toString());  //向服务器发送请求，并从服务器返回结果
+            String result = HttpUtils.sendJsonPost(jsonObject.toString());  //向服务器发送请求，并从服务器返回结果
 //            Message msg = new Message();
 //            msg.obj = "result->"+result;
 //            handler.sendMessage(msg);
@@ -434,144 +426,6 @@ public class InfoFragment extends BaseFragment {
                     break;
                 case 0:
                     ThreadToast.toast(getContext(), "上传失败");
-                    break;
-            }
-
-        }
-    }
-
-    private class ModifyFaceHttpThread implements Runnable {
-        private int resultCode;
-        private Context context;
-        private String faceBase64;
-
-        ModifyFaceHttpThread(Context context, String base64) {
-            this.context = context;
-            this.faceBase64 = base64;
-        }
-
-        @Override
-        public void run() {
-            Log.i("HttpTest", "start->");
-
-            JSONObject jsonObject = new JSONObject();
-            try {
-                jsonObject.put("service", "client.person.face");
-                SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(context, "userInfo");
-                String phoneNum = sharedPreferencesUtil.loadString("phoneNum");
-                jsonObject.put("phoneNum", phoneNum);
-                jsonObject.put("faceBase64", faceBase64);
-                //jsonObject.put("place", "1");
-            } catch (JSONException ex) {
-                ex.printStackTrace();
-            }
-            String result = httpUtils.sendJsonPost(jsonObject.toString());  //向服务器发送请求，并从服务器返回结果
-            JSONObject jsonObjectRp = null;
-            try {
-                jsonObjectRp = new JSONObject(result);  //结果string转json
-                resultCode = jsonObjectRp.optInt("resultCode");
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-            switch (resultCode) {
-                case -1:
-                    sharedPreferencesUtil = new SharedPreferencesUtil(getContext(), "userInfo");
-                    sharedPreferencesUtil.saveBoolean("hasFace", true);
-                    ThreadToast.toast(getContext(), "上传成功");
-                    break;
-                case 1:
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("未检测到人脸，请重新拍照")
-                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            takePhotoFace();
-                                            dialog.dismiss();
-                                        }
-                                    }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            }).create().show();
-                        }
-                    });
-                    break;
-                case 2:
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("生成口罩和墨镜特征失败，将影响口罩和墨镜识别，建议重新拍照")
-                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            takePhotoFace();
-                                            dialog.dismiss();
-                                        }
-                                    }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            }).create().show();
-                        }
-                    });
-                    break;
-                case 3:
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("生成口罩特征失败，将影响口罩识别，建议重新拍照")
-                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            takePhotoFace();
-                                            dialog.dismiss();
-                                        }
-                                    }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            }).create().show();
-                        }
-                    });
-                    break;
-                case 4:
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("生成墨镜特征失败，将影响墨镜识别，建议重新拍照")
-                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            takePhotoFace();
-                                            dialog.dismiss();
-                                        }
-                                    }).setNegativeButton("取消", new DialogInterface.OnClickListener() {
-                                @Override
-                                public void onClick(DialogInterface dialog, int which) {
-                                    dialog.dismiss();
-                                }
-                            }).create().show();
-                        }
-                    });
-                    break;
-                case 0:
-                    getActivity().runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            new AlertDialog.Builder(getContext()).setTitle("提示").setMessage("上传失败，请检查网络再重试")
-                                    .setPositiveButton("确定", new DialogInterface.OnClickListener() {
-                                        @Override
-                                        public void onClick(DialogInterface dialog, int which) {
-                                            dialog.dismiss();
-                                        }
-                                    }).create().show();
-                        }
-                    });
                     break;
             }
 
@@ -609,38 +463,5 @@ public class InfoFragment extends BaseFragment {
                 return null;
             }
         }
-    }
-
-    /**
-     * bitmap转base64
-     */
-    private static String bitmapToBase64(Bitmap bitmap) {
-        String result = null;
-        ByteArrayOutputStream baos = null;
-        try {
-            if (bitmap != null) {
-                baos = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, baos);
-
-                baos.flush();
-                baos.close();
-
-                byte[] bitmapBytes = baos.toByteArray();
-
-                result = Base64.encodeToString(bitmapBytes, Base64.NO_WRAP);
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                if (baos != null) {
-                    baos.flush();
-                    baos.close();
-                }
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        return result;
     }
 }
