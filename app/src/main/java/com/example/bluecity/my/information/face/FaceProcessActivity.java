@@ -21,8 +21,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 public class FaceProcessActivity extends AppCompatActivity implements View.OnClickListener {
-    ImageView ivOrigin;
-    ImageView ivEncrypt;
+    ImageView ivFace;
     Button btnEncrypt;
     Button btnUpload;
     Bitmap origin;
@@ -38,12 +37,11 @@ public class FaceProcessActivity extends AppCompatActivity implements View.OnCli
     }
 
     private void initUI(Bitmap origin) {
-        ivOrigin = findViewById(R.id.iv_origin);
-        ivEncrypt = findViewById(R.id.iv_encrypt);
+        ivFace = findViewById(R.id.iv_face);
         btnEncrypt = findViewById(R.id.btn_encrypt);
         btnUpload = findViewById(R.id.btn_upload);
 
-        ivOrigin.setImageBitmap(origin);
+        ivFace.setImageBitmap(origin);
         btnEncrypt.setOnClickListener(this);
         btnUpload.setOnClickListener(this);
     }
@@ -54,7 +52,7 @@ public class FaceProcessActivity extends AppCompatActivity implements View.OnCli
             case R.id.btn_encrypt:
                 btnEncrypt.setEnabled(false);
                 Bitmap encrypt = Utils.encrypt(origin);
-                ivEncrypt.setImageBitmap(encrypt);
+                ivFace.setImageBitmap(encrypt);
                 btnUpload.setEnabled(true);
                 break;
             case R.id.btn_upload:
@@ -145,7 +143,6 @@ public class FaceProcessActivity extends AppCompatActivity implements View.OnCli
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
-                        finish();
                     }
                 });
         builder.create().show();
