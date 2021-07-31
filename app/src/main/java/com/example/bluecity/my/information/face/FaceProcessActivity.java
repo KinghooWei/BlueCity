@@ -14,11 +14,15 @@ import androidx.appcompat.app.AppCompatActivity;
 import com.example.bluecity.HttpUtils;
 import com.example.bluecity.R;
 import com.example.bluecity.SharedPreferencesUtil;
-import com.example.bluecity.ThreadToast;
+import com.example.bluecity.ThreadPool;
 import com.example.bluecity.Utils;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 public class FaceProcessActivity extends AppCompatActivity implements View.OnClickListener {
     ImageView ivFace;
@@ -56,16 +60,48 @@ public class FaceProcessActivity extends AppCompatActivity implements View.OnCli
                 btnUpload.setEnabled(true);
                 break;
             case R.id.btn_upload:
-                new Thread(new ModifyFaceHttpThread()).start(); //上传人脸
+                Future<Integer> future = ThreadPool.executorService.submit(new ModifyFaceHttpThread());
+                try {
+                    alertResult(future);
+                } catch (ExecutionException | InterruptedException e) {
+                    e.printStackTrace();
+                }
+        }
+    }
+
+    private void alertResult(Future<Integer> future) throws ExecutionException, InterruptedException {
+        SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(getApplicationContext(), "userInfo");
+        switch (future.get()) {
+            case -1:
+                sharedPreferencesUtil.saveBoolean("hasFace", true);
+                Utils.showToast("上传成功");
+                finish();
+                break;
+            case 1:
+                alert("未检测到人脸，请重新拍照");
+                break;
+            case 2:
+                sharedPreferencesUtil.saveBoolean("hasFace", true);
+                alert("生成口罩和墨镜特征失败，将影响口罩和墨镜识别，建议重新拍照");
+                break;
+            case 3:
+                sharedPreferencesUtil.saveBoolean("hasFace", true);
+                alert("生成口罩特征失败，将影响口罩识别，建议重新拍照");
+                break;
+            case 4:
+                sharedPreferencesUtil.saveBoolean("hasFace", true);
+                alert("生成墨镜特征失败，将影响墨镜识别，建议重新拍照");
+                break;
+            case 0:
+                alert("上传失败，请检查网络再重试");
                 break;
         }
     }
 
-    private class ModifyFaceHttpThread implements Runnable {
-        private int resultCode;
+    private class ModifyFaceHttpThread implements Callable<Integer> {
 
         @Override
-        public void run() {
+        public Integer call() throws Exception {
             Log.i("HttpTest", "start->");
 
             JSONObject jsonObject = new JSONObject();
@@ -83,57 +119,10 @@ public class FaceProcessActivity extends AppCompatActivity implements View.OnCli
             JSONObject jsonObjectRp = null;
             try {
                 jsonObjectRp = new JSONObject(result);  //结果string转json
-                resultCode = jsonObjectRp.optInt("resultCode");
             } catch (JSONException e) {
                 e.printStackTrace();
             }
-            switch (resultCode) {
-                case -1:
-                    SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(getApplicationContext(), "userInfo");
-                    sharedPreferencesUtil.saveBoolean("hasFace", true);
-                    ThreadToast.toast(getApplicationContext(), "上传成功");
-                    break;
-                case 1:
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            alert("未检测到人脸，请重新拍照");
-                        }
-                    });
-                    break;
-                case 2:
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            alert("生成口罩和墨镜特征失败，将影响口罩和墨镜识别，建议重新拍照");
-                        }
-                    });
-                    break;
-                case 3:
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            alert("生成口罩特征失败，将影响口罩识别，建议重新拍照");
-                        }
-                    });
-                    break;
-                case 4:
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            alert("生成墨镜特征失败，将影响墨镜识别，建议重新拍照");
-                        }
-                    });
-                    break;
-                case 0:
-                    runOnUiThread(new Runnable() {
-                        @Override
-                        public void run() {
-                            alert("上传失败，请检查网络再重试");
-                        }
-                    });
-                    break;
-            }
+            return jsonObjectRp.optInt("resultCode");
         }
     }
 
@@ -143,6 +132,7 @@ public class FaceProcessActivity extends AppCompatActivity implements View.OnCli
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
                         dialog.dismiss();
+                        finish();
                     }
                 });
         builder.create().show();
