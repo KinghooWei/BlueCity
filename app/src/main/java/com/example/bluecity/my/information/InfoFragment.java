@@ -32,12 +32,14 @@ import androidx.navigation.Navigation;
 import androidx.recyclerview.widget.LinearLayoutManager;
 
 import com.example.bluecity.HttpUtils;
+import com.example.bluecity.MyApplication;
 import com.example.bluecity.R;
 import com.example.bluecity.SharedPreferencesUtil;
+import com.example.bluecity.ThreadPool;
 import com.example.bluecity.ThreadToast;
 import com.example.bluecity.Utils;
 import com.example.bluecity.databinding.FragmentInfoBinding;
-import com.example.bluecity.my.information.face.FaceProcessActivity;
+import com.example.bluecity.my.information.network.ModifyFaceHttpThread;
 import com.example.bluecity.my.information.portrait.BaseFragment;
 import com.example.bluecity.my.information.portrait.PhotoUtils;
 
@@ -45,6 +47,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.Future;
 
 import static android.app.Activity.RESULT_OK;
 
@@ -368,17 +372,57 @@ public class InfoFragment extends BaseFragment {
                     bitmap = PhotoUtils.getBitmapFromUri(getContext(), faceCropUri);
                     if (bitmap != null) {
                         String base64 = Utils.bitmapToBase64(bitmap);
-                        Bundle bundle = new Bundle();
-                        bundle.putString("origin", base64);
-                        Intent intent = new Intent(getContext(), FaceProcessActivity.class);
-                        intent.putExtras(bundle);
-                        startActivity(intent);
+                        Future<Integer> future = ThreadPool.executorService.submit(new ModifyFaceHttpThread(base64));
+                        try {
+                            alertResult(future);
+                        } catch (ExecutionException | InterruptedException e) {
+                            e.printStackTrace();
+                        }
                         Log.i("base64", base64);
                     }
                     break;
             }
         }
 
+    }
+
+    private void alertResult(Future<Integer> future) throws ExecutionException, InterruptedException {
+        SharedPreferencesUtil sharedPreferencesUtil = new SharedPreferencesUtil(MyApplication.context, "userInfo");
+        switch (future.get()) {
+            case -1:
+                sharedPreferencesUtil.saveBoolean("hasFace", true);
+                Utils.showToast("上传成功");
+                break;
+            case 1:
+                alert("未检测到人脸，请重新拍照");
+                break;
+            case 2:
+                sharedPreferencesUtil.saveBoolean("hasFace", true);
+                alert("生成口罩和墨镜特征失败，将影响口罩和墨镜识别，建议重新拍照");
+                break;
+            case 3:
+                sharedPreferencesUtil.saveBoolean("hasFace", true);
+                alert("生成口罩特征失败，将影响口罩识别，建议重新拍照");
+                break;
+            case 4:
+                sharedPreferencesUtil.saveBoolean("hasFace", true);
+                alert("生成墨镜特征失败，将影响墨镜识别，建议重新拍照");
+                break;
+            case 0:
+                alert("上传失败，请检查网络再重试");
+                break;
+        }
+    }
+
+    private void alert(String msg) {
+        AlertDialog.Builder builder = new AlertDialog.Builder(MyApplication.context).setTitle("提示").setMessage(msg)
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        dialog.dismiss();
+                    }
+                });
+        builder.create().show();
     }
 
     private class ModifyPortraitHttpThread extends Thread {
